@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     List<Pedido> findByClienteId(Long clienteId);
 
-    List<Pedido> findByStatus(Boolean status);
+    List<Pedido> findByStatus(String status);
 
     List<Pedido> findByDataPedido(LocalDateTime dataPedido);
 
