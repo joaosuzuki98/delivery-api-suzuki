@@ -35,3 +35,7 @@ Sistema de delivery desenvolvido com Spring Boot e Java 21.
 ## 👨‍💻 Desenvolvedor
 João Suzuki - Arquitetura de Software  
 Desenvolvido com JDK 21 e Spring Boot 3.2.x
+
+## 🧪 Como testar a API
+
+Você pode testar os endpoints da aplicação utilizando ferramentas como **Postman**, **Insomnia** ou **cURL**.
