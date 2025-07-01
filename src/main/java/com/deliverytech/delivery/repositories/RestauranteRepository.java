@@ -1,5 +1,6 @@
 package com.deliverytech.delivery.repositories;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,4 +18,8 @@ public interface RestauranteRepository extends JpaRepository<Restaurante, Long> 
     List<Restaurante> findByAtivoTrue();
 
     List<Restaurante> findByAtivoTrueOrderByAvaliacaoDesc();
+
+    List<Restaurante> findByTaxaEntregaLessThanEqual(BigDecimal taxa);
+
+    List<Restaurante> findTop5ByOrderByNomeAsc();
 }
