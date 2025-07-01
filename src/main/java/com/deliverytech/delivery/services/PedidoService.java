@@ -8,14 +8,24 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.deliverytech.delivery.entities.ItemPedido;
 import com.deliverytech.delivery.entities.Pedido;
+import com.deliverytech.delivery.entities.Produto;
+import com.deliverytech.delivery.repositories.ItemPedidoRepository;
 import com.deliverytech.delivery.repositories.PedidoRepository;
+import com.deliverytech.delivery.repositories.ProdutoRepository;
 
 @Service
 public class PedidoService {
 
     @Autowired
     private PedidoRepository repository;
+
+    @Autowired
+    private ProdutoRepository produtoRepository;
+
+    @Autowired
+    private ItemPedidoRepository itemPedidoRepository;
 
     public Pedido create(Pedido pedido) {
         if (pedido.getNumeroPedido() == null || pedido.getNumeroPedido().isBlank()) {
@@ -24,6 +34,18 @@ public class PedidoService {
 
         if (pedido.getDataPedido() == null) {
             pedido.setDataPedido(LocalDateTime.now());
+        }
+
+        if (pedido.getItensPedido() != null) {
+            for (ItemPedido item : pedido.getItensPedido()) {
+                Produto produto = produtoRepository.findById(item.getProduto().getId())
+                    .orElseThrow(() -> new RuntimeException("Produto não encontrado com id: " + item.getProduto().getId()));
+
+                item.setProduto(produto);
+                item.setPedido(pedido);
+                item.setPrecoUnitario(produto.getPreco());
+                item.setSubtotal(produto.getPreco() * item.getQuantidade());
+            }
         }
 
         return repository.save(pedido);
@@ -109,5 +131,44 @@ public class PedidoService {
 
     private String gerarNumeroPedido() {
         return "PD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    }
+
+    public Pedido updateItem(Long pedidoId, ItemPedido updatedItem) {
+        Pedido pedido = repository.findById(pedidoId)
+                .orElseThrow(() -> new RuntimeException("Pedido não encontrado com id: " + pedidoId));
+
+        ItemPedido itemExistente = itemPedidoRepository.findById(updatedItem.getId())
+                .orElseThrow(() -> new RuntimeException("Item não encontrado com id: " + updatedItem.getId()));
+
+        Produto produto = produtoRepository.findById(updatedItem.getProduto().getId())
+                .orElseThrow(() -> new RuntimeException("Produto não encontrado com id: " + updatedItem.getProduto().getId()));
+
+        itemExistente.setProduto(produto);
+        itemExistente.setQuantidade(updatedItem.getQuantidade());
+        itemExistente.setPrecoUnitario(produto.getPreco());
+        itemExistente.setSubtotal(produto.getPreco() * updatedItem.getQuantidade());
+
+        itemPedidoRepository.save(itemExistente);
+
+        double novoTotal = itemPedidoRepository.findByPedidoId(pedidoId).stream()
+                .mapToDouble(ItemPedido::getSubtotal).sum();
+
+        pedido.setValorTotal(novoTotal);
+        return repository.save(pedido);
+    }
+
+    public void deleteItem(Long itemId) {
+        ItemPedido item = itemPedidoRepository.findById(itemId)
+                .orElseThrow(() -> new RuntimeException("Item não encontrado com id: " + itemId));
+
+        Pedido pedido = item.getPedido();
+
+        itemPedidoRepository.delete(item);
+
+        double novoTotal = itemPedidoRepository.findByPedidoId(pedido.getId()).stream()
+                .mapToDouble(ItemPedido::getSubtotal).sum();
+
+        pedido.setValorTotal(novoTotal);
+        repository.save(pedido);
     }
 }
