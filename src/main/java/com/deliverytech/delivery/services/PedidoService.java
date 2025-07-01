@@ -71,8 +71,8 @@ public class PedidoService {
         return repository.findByStatus(status);
     }
 
-    public List<Pedido> getByDate(LocalDateTime data) {
-        return repository.findByDataPedido(data);
+    public List<Pedido> getByDate(LocalDateTime dataInicio, LocalDateTime dataFim) {
+        return repository.findByDataPedidoBetween(dataInicio, dataFim);
     }
 
     public Pedido update(Pedido updated, Long id) {
